@@ -61,6 +61,12 @@ namespace HackChuClientApp
                     {
                         return;
                     }
+
+                    if(detectAsync.Count() == 1)
+                    {
+                        timer.Stop();
+                        Frame.Navigate(typeof(BrowserPage));
+                    }
                     var userEmotion = detectAsync[0].FaceAttributes.Emotion;
                     FaceResultText.Text = $"{detectAsync.Count()}人, {userEmotion.Happiness}ハピネス度, {userEmotion.Neutral}虚無おじさん度";
                 }
