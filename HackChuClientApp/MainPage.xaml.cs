@@ -62,13 +62,32 @@ namespace HackChuClientApp
                         return;
                     }
 
-                    if(detectAsync.Count() == 1)
+                    if (detectAsync.Count() > 0)
                     {
                         timer.Stop();
                         Frame.Navigate(typeof(BrowserPage));
                     }
+
+                    var personGroups = await FaceServiceClient.GetPersonGroupsAsync();
+
+
+                    var personGroupId = personGroups[0].PersonGroupId;
+
+                    var faceIdentitfy = await FaceServiceClient.IdentifyAsync(personGroupId, detectAsync.Select(face => face.FaceId).ToArray());
+
+                    if (!faceIdentitfy.Any()) { return; }
+                    
+                    var res = faceIdentitfy[0];
+                    var persons = await FaceServiceClient.GetPersonsAsync(personGroupId);
+                    var result = persons.Where(person => person.PersonId == res.Candidates[0].PersonId).ToList();
+                    
+                    var userName = result[0].Name;
+                    FaceResultText.Text = $"Welcome To {userName}";
+
+                    faceIdentitfy.Count();
+
                     var userEmotion = detectAsync[0].FaceAttributes.Emotion;
-                    FaceResultText.Text = $"{detectAsync.Count()}人, {userEmotion.Happiness}ハピネス度, {userEmotion.Neutral}虚無おじさん度";
+                    //FaceResultText.Text = $"{detectAsync.Count()}人, {userEmotion.Happiness}ハピネス度, {userEmotion.Neutral}虚無おじさん度";
                 }
 
             };

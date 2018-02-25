@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI.Popups;
@@ -29,15 +30,15 @@ namespace HackChuClientApp
             this.InitializeComponent();
 
             ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
-            Browser.Navigate(new Uri("https://yahoo.co.jp/"));
+            Browser.Navigate(new Uri("https://hackchu2018.azurewebsites.net/chukyo.html"));
         }
 
         private void Browser_NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
         {
-            if(args.Uri.AbsoluteUri != "https://www.yahoo.co.jp/")
-                {
-                new Windows.ApplicationModel.DataTransfer.DataPackage().SetText(args.Uri.ToString());
-                new MessageDialog(args.Uri.ToString()).ShowAsync();
+            if (args.Uri.AbsoluteUri.Contains("End"))
+            {
+                //Task.Delay(TimeSpan.FromSeconds(3));
+                Frame.Navigate(typeof(MainPage));
             }
         }
     }
