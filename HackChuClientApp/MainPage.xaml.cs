@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.Foundation;
 using Windows.Graphics.Imaging;
 using Windows.Media.Capture;
 using Windows.Media.FaceAnalysis;
@@ -35,7 +36,7 @@ namespace HackChuClientApp
 
             InitAsync();
 
-            timer.Interval = TimeSpan.FromSeconds(1);
+            timer.Interval = TimeSpan.FromSeconds(2);
 
             timer.Tick += async (sender, o) =>
             {
@@ -48,26 +49,25 @@ namespace HackChuClientApp
                 property.Width = properties.Width;
                 property.Height = properties.Height;
 
-
+                var RotationKey = new Guid("C380465D-2271-428C-9B83-ECEA3B4A85C1");
+                
                 using (var RandomStream = new InMemoryRandomAccessStream())
                 {
                     await mediaCapture.CapturePhotoToStreamAsync(property, RandomStream);
+                    //mediaCapture.SetPreviewRotation(VideoRotation.Clockwise90Degrees);
                     RandomStream.Seek(0);
 
                     IEnumerable<FaceAttributeType> faceAttributes = new FaceAttributeType[] { FaceAttributeType.Gender, FaceAttributeType.Age, FaceAttributeType.Smile, FaceAttributeType.Emotion, FaceAttributeType.Glasses, FaceAttributeType.Hair };
 
+                    //mediaCapture.SetRecordRotation(VideoRotation.Clockwise90Degrees);
+                    //mediaCapture.SetPreviewRotation(VideoRotation.Clockwise90Degrees);
                     var detectAsync = await FaceServiceClient.DetectAsync(RandomStream.AsStreamForRead(),returnFaceAttributes:faceAttributes);
                     if(detectAsync.Count() == 0)
                     {
+                        await new MessageDialog("No Detect").ShowAsync();
                         return;
                     }
-
-                    if (detectAsync.Count() > 0)
-                    {
-                        timer.Stop();
-                        Frame.Navigate(typeof(BrowserPage));
-                    }
-
+                    
                     var personGroups = await FaceServiceClient.GetPersonGroupsAsync();
 
 
@@ -78,13 +78,24 @@ namespace HackChuClientApp
                     if (!faceIdentitfy.Any()) { return; }
                     
                     var res = faceIdentitfy[0];
-                    var persons = await FaceServiceClient.GetPersonsAsync(personGroupId);
+                    var persons = await FaceServiceClient.ListPersonsAsync(personGroupId);
+                    if (!res.Candidates.Any())
+                    {
+                        await new MessageDialog("No candidate").ShowAsync();
+                        return;
+                    }
                     var result = persons.Where(person => person.PersonId == res.Candidates[0].PersonId).ToList();
                     
                     var userName = result[0].Name;
                     FaceResultText.Text = $"Welcome To {userName}";
 
                     faceIdentitfy.Count();
+
+                    if (detectAsync.Count() > 0)
+                    {
+                        timer.Stop();
+                        Frame.Navigate(typeof(BrowserPage),userName);
+                    }
 
                     var userEmotion = detectAsync[0].FaceAttributes.Emotion;
                     //FaceResultText.Text = $"{detectAsync.Count()}人, {userEmotion.Happiness}ハピネス度, {userEmotion.Neutral}虚無おじさん度";
